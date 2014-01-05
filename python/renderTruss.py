@@ -2,12 +2,16 @@ import vtk
 #import json
 import generateTruss
 import solveTruss
-
+import math
 
 Truss = generateTruss.generateTurss(17)
 Truss = solveTruss.solveTruss(Truss)
 
-#with open('truss.json','rb') as file: Truss = json.load(file)
+print "Truss['BeamOrientationTest'] =", Truss['BeamOrientationTest']
+print "Truss['BeamStressLimitTest'] =", Truss['BeamStressLimitTest']
+print "Truss['MaterialCost'] =", Truss['MaterialCost']
+print "Truss['EfficiencyScore'] =", Truss['EfficiencyScore']
+
 
 # window
 window = vtk.vtkRenderWindow()
@@ -23,31 +27,11 @@ light = renderer.MakeLight()
 light.SetLightTypeToCameraLight()
 renderer.AddLight(light)
 renderer.GetActiveCamera().SetViewAngle(80)
+renderer.GetActiveCamera().SetClippingRange(0.001, 100000000)
  
 # interactor
 interactor = vtk.vtkRenderWindowInteractor()
 interactor.SetRenderWindow(window)
- 
-# sphere
-sphereSource = vtk.vtkSphereSource()
-sphereSource.SetCenter(0,0,0)
-sphereSource.SetRadius(0.05)
-sphereSource.SetThetaResolution(20)
-sphereSource.SetPhiResolution(20)
-
-
-for joint in Truss['Joints']:
-    mapper = vtk.vtkPolyDataMapper()
-    if vtk.VTK_MAJOR_VERSION <= 5:
-        mapper.SetInput(sphereSource.GetOutput())
-    else:
-        mapper.SetInputConnection(sphereSource.GetOutputPort())
-    actor = vtk.vtkActor()
-    actor.SetMapper(mapper)
-    actor.SetPosition(joint['Position'][0], joint['Position'][1], joint['Position'][2])
-    renderer.AddActor(actor)
-
-
 
 
 
@@ -83,7 +67,7 @@ for beam in Truss['Beams']:
     
     vtkTubeFilter = vtk.vtkTubeFilter()
     vtkTubeFilter.SetInputConnection(vtkSplineFilter.GetOutputPort())
-    vtkTubeFilter.SetRadius(0.015)
+    vtkTubeFilter.SetRadius(math.sqrt(beam['CrossSectionArea']/3.1415))
     vtkTubeFilter.SetNumberOfSides(20)
     vtkTubeFilter.CappingOn()
     
@@ -98,20 +82,13 @@ for beam in Truss['Beams']:
 
 
 
-
-
-
-
-
 def Render(obj, ev):
 
     renderer =  obj.GetRenderWindow().GetRenderers().GetFirstRenderer()
     camera = renderer.GetActiveCamera()
     camera.SetViewUp(0,1,0)
-    #camera.SetViewAngle(90)
 
 interactor.AddObserver('RenderEvent', Render, -1.0)
-# enable user interface interactor
 
 interactor.Initialize()
 window.Render()

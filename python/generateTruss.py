@@ -1,4 +1,3 @@
-#import json
 import math
 import random
 
@@ -17,12 +16,12 @@ def generateTurss(sections = 15):
         
         x *= 3
 
-        rand_range = 50        
-        
-        Truss['Joints'][4*i+0] = {'Position': [x, lower, 0], 'Force': [0, -100 +random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
-        Truss['Joints'][4*i+1] = {'Position': [x, upper, 0], 'Force': [0, -100 +random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
-        Truss['Joints'][4*i+2] = {'Position': [x, lower, 1], 'Force': [0, -100 +random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
-        Truss['Joints'][4*i+3] = {'Position': [x, upper, 1], 'Force': [0, -100 +random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
+        rand_range = 1000        
+        scale = 50
+        Truss['Joints'][4*i+0] = {'Position': [scale*x, scale*lower,     0], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
+        Truss['Joints'][4*i+1] = {'Position': [scale*x, scale*upper,     0], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
+        Truss['Joints'][4*i+2] = {'Position': [scale*x, scale*lower, scale], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
+        Truss['Joints'][4*i+3] = {'Position': [scale*x, scale*upper, scale], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
         
     
     
@@ -34,7 +33,16 @@ def generateTurss(sections = 15):
             length = math.sqrt(sum([connection_vector[k] * connection_vector[k] for k in range(3)]))
             for k in range(3): connection_vector[k] /= length
             
-            beam = {'JointIndex_i': i, 'JointIndex_j': j, 'ConnectionVector': connection_vector, 'Length': length}
+            beam = {'JointIndex_i': i, 
+                    'JointIndex_j': j, 
+                    'ConnectionVector': connection_vector, 
+                    'Length': length,
+                    'ElasticModulus': 210e9, # ElasticModulus of steel in Pascal (SI-MKS)
+                    'Density': 7.8e3,        # Density of steel in kg m^-3 (SI-MKS)
+                    'StressLimit': 250e6,    # StressLimit of steel in Pascal (SI-MKS)
+                    'CrossSectionArea': 0.8, # CrossSectionArea of the beam in m^2 (SI-MKS)
+                    'CostPerMass': 0.7       # dollar per kg
+                    }
             
             i_x = i//4
             i_y = i % 2
@@ -46,29 +54,24 @@ def generateTurss(sections = 15):
     
             if i_x == j_x:
                 if i_y == j_y:
-                    beam['SpringConst'] = length * 1e7
+                    beam['CrossSectionArea'] = 0.1
                     Truss['Beams'].append(beam)
                     
                 if i_z == j_z:
-                    beam['SpringConst'] = length * 1e7
                     Truss['Beams'].append(beam)
             
             if j_x - i_x == 1:
                 if i_z == j_z and i_y == j_y:
-                    beam['SpringConst'] = length * 1e7
                     Truss['Beams'].append(beam)
                     
-                if i_z == j_z and i_y != j_y and (i_x+1 > sections/2) != (i_y < j_y):
-                    beam['SpringConst'] = length * 1e7
+                if i_z == j_z and i_y != j_y and (i_x+1 > sections/2) == (i_y < j_y):
                     Truss['Beams'].append(beam)
                     
                 if i_z != j_z and i_y == j_y:
-                    beam['SpringConst'] = length * 1e7
+                    beam['CrossSectionArea'] = 0.1
                     Truss['Beams'].append(beam)
-                
             
     
     Truss['FixedJoints'] = [0, 1, 2, 3, 4*sections-4, 4*sections-3, 4*sections-2, 4*sections-1]
     
-    #with open('truss.json','wb') as file: json.dump(Truss, file)
     return Truss
