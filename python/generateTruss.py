@@ -4,9 +4,11 @@ import random
 def generateTurss(sections = 15):
     random.seed()
     Truss={}
-    
+
+    # Exampe: Bridge
+
+    # Generate all nodes    
     Truss['Joints'] = [None]*(4*sections)
-    
     for i in range(sections):
         
         x = 2.0 * i / (sections-1) - 1
@@ -15,16 +17,15 @@ def generateTurss(sections = 15):
         upper = -0.5*(x+1)*(x-1)+0.7
         
         x *= 3
-
-        rand_range = 1000        
+    
         scale = 50
-        Truss['Joints'][4*i+0] = {'Position': [scale*x, scale*lower,     0], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
-        Truss['Joints'][4*i+1] = {'Position': [scale*x, scale*upper,     0], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
-        Truss['Joints'][4*i+2] = {'Position': [scale*x, scale*lower, scale], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
-        Truss['Joints'][4*i+3] = {'Position': [scale*x, scale*upper, scale], 'ExternalForce': [0, random.uniform(-rand_range,rand_range), random.uniform(-rand_range,rand_range)]};
+        Truss['Joints'][4*i+0] = {'Position': [scale*x, scale*lower,     0], 'ExternalForce': [0,0,0]};
+        Truss['Joints'][4*i+1] = {'Position': [scale*x, scale*upper,     0], 'ExternalForce': [0,0,0]};
+        Truss['Joints'][4*i+2] = {'Position': [scale*x, scale*lower, scale], 'ExternalForce': [0,0,0]};
+        Truss['Joints'][4*i+3] = {'Position': [scale*x, scale*upper, scale], 'ExternalForce': [0,0,0]};
         
     
-    
+    # Iterate over all pairs of nodes and select connecting beams
     Truss['Beams'] = []
     for i in range(4*sections-1):
         for j in range(i+1, 4*sections):
@@ -33,7 +34,8 @@ def generateTurss(sections = 15):
             length = math.sqrt(sum([connection_vector[k] * connection_vector[k] for k in range(3)]))
             for k in range(3): connection_vector[k] /= length
             
-            beam = {'JointIndex_i': i, 
+            beam = {
+                    'JointIndex_i': i, 
                     'JointIndex_j': j, 
                     'ConnectionVector': connection_vector, 
                     'Length': length,
@@ -71,7 +73,7 @@ def generateTurss(sections = 15):
                     beam['CrossSectionArea'] = 0.1
                     Truss['Beams'].append(beam)
             
-    
+    # Define pin supports
     Truss['FixedJoints'] = [0, 1, 2, 3, 4*sections-4, 4*sections-3, 4*sections-2, 4*sections-1]
     
     return Truss

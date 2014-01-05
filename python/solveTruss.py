@@ -8,9 +8,8 @@ def solveTruss(Truss):
     dimension = 3
 
     # our system of equations: Au=f    
-    A = scipy.sparse.lil_matrix((num_joints*dimension, num_joints*dimension))
+    A = {}
     f = numpy.array([force_component for joint in Truss['Joints'] for force_component in joint['ExternalForce']])
-    
     
     # put beam-wise data in the equation system
     for Beam in Truss['Beams']:
@@ -23,25 +22,49 @@ def solveTruss(Truss):
         f[id_i*dimension+1] -= beam_mass/2 * 9.81
         f[id_j*dimension+1] -= beam_mass/2 * 9.81        
         
+        # Core algorithm: Connects the beams to the equilibrium equations.
         for dim_T in range(dimension):
             for dim_u in range(dimension):
                 s = sprint_const * Beam['ConnectionVector'][dim_T] * Beam['ConnectionVector'][dim_u]
-                A[id_i*dimension+dim_T, id_i*dimension+dim_u] += s
-                A[id_i*dimension+dim_T, id_j*dimension+dim_u] -= s
-                A[id_j*dimension+dim_T, id_i*dimension+dim_u] -= s
-                A[id_j*dimension+dim_T, id_j*dimension+dim_u] += s
+                                
+                ii = str(id_i*dimension+dim_T) + ","  + str(id_i*dimension+dim_u)
+                ij = str(id_i*dimension+dim_T) + ","  + str(id_j*dimension+dim_u)
+                ji = str(id_j*dimension+dim_T) + ","  + str(id_i*dimension+dim_u)
+                jj = str(id_j*dimension+dim_T) + ","  + str(id_j*dimension+dim_u)
                 
+                if not ii in A: A[ii] = [id_i*dimension+dim_T, id_i*dimension+dim_u, 0]
+                if not ij in A: A[ij] = [id_i*dimension+dim_T, id_j*dimension+dim_u, 0]
+                if not ji in A: A[ji] = [id_j*dimension+dim_T, id_i*dimension+dim_u, 0]
+                if not jj in A: A[jj] = [id_j*dimension+dim_T, id_j*dimension+dim_u, 0]                    
+                    
+                A[ii][2] += s
+                A[ij][2] -= s
+                A[ji][2] -= s
+                A[jj][2] += s
+                
+
+
+
     # overwrite the equations for the pin supports: (dx, dy, dz) = 0
     for fixedJoint in Truss['FixedJoints']:
         for dim_T in range(dimension):
             for col_id in range(num_joints*dimension):
-                A[fixedJoint*dimension+dim_T, col_id] = 0
+                i = str(fixedJoint*dimension+dim_T) + ","  + str(col_id)
+                if i in A: A[i][2] = 0
             
-            A[fixedJoint*dimension+dim_T, fixedJoint*dimension+dim_T] = 1
+            i = str(fixedJoint*dimension+dim_T) + ","  + str(fixedJoint*dimension+dim_T)
+            if i in A: A[i][2] = 1
             f[fixedJoint*dimension+dim_T] = 0
     
-    # solve the equation system
+    # Convert the representation of the equation matrix, necessary for performance reasons
+    IJV = A.values()
+    row = [ijv[0] for ijv in IJV]
+    col = [ijv[1] for ijv in IJV]
+    data = [ijv[2] for ijv in IJV]    
+    A = scipy.sparse.coo_matrix((data,(row,col)), shape=(num_joints*dimension, num_joints*dimension))    
     A = scipy.sparse.csc_matrix(A)
+    
+    # solve the equation system    
     u = scipy.sparse.linalg.spsolve(A,f)
 
     # move the result into our datastructure    
