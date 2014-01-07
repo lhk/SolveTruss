@@ -1,7 +1,11 @@
 import math
 import random
 
-def generateTurss(sections = 15):
+def rf():
+    scale = 1e7
+    return [random.uniform(-scale,scale), random.uniform(-scale,scale), random.uniform(-scale,scale)]
+
+def generateTruss(sections = 15):
     random.seed()
     Truss={}
 
@@ -19,10 +23,10 @@ def generateTurss(sections = 15):
         x *= 3
     
         scale = 50
-        Truss['Joints'][4*i+0] = {'Position': [scale*x, scale*lower,     0], 'ExternalForce': [0,0,0]};
-        Truss['Joints'][4*i+1] = {'Position': [scale*x, scale*upper,     0], 'ExternalForce': [0,0,0]};
-        Truss['Joints'][4*i+2] = {'Position': [scale*x, scale*lower, scale], 'ExternalForce': [0,0,0]};
-        Truss['Joints'][4*i+3] = {'Position': [scale*x, scale*upper, scale], 'ExternalForce': [0,0,0]};
+        Truss['Joints'][4*i+0] = {'Position': [scale*x, scale*lower,     0], 'ExternalForce': rf()};
+        Truss['Joints'][4*i+1] = {'Position': [scale*x, scale*upper,     0], 'ExternalForce': rf()};
+        Truss['Joints'][4*i+2] = {'Position': [scale*x, scale*lower, scale], 'ExternalForce': rf()};
+        Truss['Joints'][4*i+3] = {'Position': [scale*x, scale*upper, scale], 'ExternalForce': rf()};
         
     
     # Iterate over all pairs of nodes and select connecting beams

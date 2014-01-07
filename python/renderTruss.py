@@ -1,11 +1,18 @@
 import vtk
-#import json
-import generateTruss
 import solveTruss
 import math
+import time
+import json
+import zlib
 
-Truss = generateTruss.generateTurss(17)
+#Truss = generateTrussSimple.generateTruss()
+
+with open('pool/truss.z', 'rb') as file: 
+    Truss = json.loads(zlib.decompress(file.read()))
+
+start = time.time()
 Truss = solveTruss.solveTruss(Truss)
+print "Solve Time:", time.time()-start
 
 print "Truss['BeamOrientationTest'] =", Truss['BeamOrientationTest']
 print "Truss['BeamStressLimitTest'] =", Truss['BeamStressLimitTest']
