@@ -3,10 +3,6 @@ import random
 import json
 import zlib
 
-def rf():
-    scale = 1e3
-    return [random.uniform(-scale,scale), random.uniform(-scale,scale), random.uniform(-scale,scale)]
-
 def generateTruss():
     random.seed()
     sections = 6
@@ -26,10 +22,10 @@ def generateTruss():
         x *= 15
     
         scale = 15
-        Truss['Joints'][4*i+0] = {'Position': [scale*x, scale*lower,     0], 'ExternalForce': rf()};
-        Truss['Joints'][4*i+1] = {'Position': [scale*x, scale*upper,     0], 'ExternalForce': rf()};
-        Truss['Joints'][4*i+2] = {'Position': [scale*x, scale*lower, scale], 'ExternalForce': rf()};
-        Truss['Joints'][4*i+3] = {'Position': [scale*x, scale*upper, scale], 'ExternalForce': rf()};
+        Truss['Joints'][4*i+0] = {'Position': [scale*x, scale*lower,     0]};
+        Truss['Joints'][4*i+1] = {'Position': [scale*x, scale*upper,     0]};
+        Truss['Joints'][4*i+2] = {'Position': [scale*x, scale*lower, scale]};
+        Truss['Joints'][4*i+3] = {'Position': [scale*x, scale*upper, scale]};
         
     
     # Iterate over all pairs of nodes and select connecting beams
@@ -82,6 +78,12 @@ def generateTruss():
             
     # Define pin supports
     Truss['FixedJoints'] = [0, 1, 2, 3, 4*sections-4, 4*sections-3, 4*sections-2, 4*sections-1]
+    
+    Truss['LoadScenarios'] = []
+    Truss['LoadScenarios'].append({'Force' :[1e5, -2e7, 1e6]})
+    Truss['LoadScenarios'].append({'Force' :[1e5, -2e7, -1e6]})
+    Truss['LoadScenarios'].append({'Force' :[-1e5, -2e7, 1e6]})
+    Truss['LoadScenarios'].append({'Force' :[-1e5, -2e7, -1e6]})
     
     return Truss
     
